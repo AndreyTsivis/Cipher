@@ -9,9 +9,13 @@
 
 ### Dependencies:
 ``
-pip install cryptography
+pip3 install cryptography
 ``
 
 ``
-pip install art
+pip3 install art
+``
+#### or
+``
+pip3 install -r requirements.txt
 ``
