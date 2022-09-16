@@ -1,7 +1,6 @@
 from base64 import urlsafe_b64encode as b64encode
 from cryptography.fernet import Fernet
 from os import remove, system, urandom
-from art import text2art
 from json import load as json_load
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -20,11 +19,11 @@ class colors:
 
 class Cipher:
     def __init__(self):
-        conf = json_load(open("config.json", "r"))
+        conf = json_load(open("config.json", "rb"))
 
         while True:
             system("cls||clear")
-            print(f"{colors.GREEN + text2art(conf['AppName'], 'tarty1') + colors.CUR_CLR}\nver {conf['AppVersion'] + colors.RESET}\n")
+            print(f"{colors.GREEN + conf['AppArt'] + colors.CUR_CLR}\nver {conf['AppVersion'] + colors.RESET}\n")
 
             print(f"{colors.YELLOW}[1]{colors.RESET} Encrypt\n{colors.YELLOW}[2]{colors.RESET} Decrypt\n{colors.YELLOW}[3]{colors.RESET} Generate new key\n{colors.YELLOW}[4]{colors.RESET} Exit")
             select = int(input(f"Select:{colors.YELLOW} "))
