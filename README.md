@@ -11,10 +11,6 @@
 ``
 pip3 install cryptography
 ``
-
-``
-pip3 install art
-``
 #### or
 ``
 pip3 install -r requirements.txt
