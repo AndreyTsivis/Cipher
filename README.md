@@ -11,3 +11,7 @@
 ``
 pip install cryptography
 ``
+
+``
+pip install art
+``
