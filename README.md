@@ -1,4 +1,4 @@
-# Cipher
+<p align="center"> <img src="imgs/cipher.png"> </p>
 
 <p align="center">
   <img src="https://img.shields.io/github/issues/AndreyTsivis/Cipher?style=for-the-badge"/>
