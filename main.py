@@ -30,14 +30,8 @@ class Cipher:
             select = int(input(f"Select:{colors.YELLOW} "))
             print(colors.RESET)
 
-            if select == 1:
-                key = self.load_key()
-                file = input(f"Enter file name:{colors.YELLOW} ")
-                self.encrypt(file, key)
-            elif select == 2:
-                key = self.load_key()
-                file = input(f"Enter file name:{colors.YELLOW} ")
-                self.decrypt(file, key)
+            if select == 1 or select == 2:
+                self.select( select )
             elif select == 3:
                 password = input(f"Enter password:{colors.YELLOW} ")
                 self.write_key(password)
@@ -80,6 +74,15 @@ class Cipher:
             data = f.decrypt(encrypted_data)
             open(filename[:-10], "wb").write(data)
             remove(filename)
+
+    def select(self, Type):
+        key = self.load_key()
+        file = input(f"Enter file name:{colors.YELLOW} ")
+        if( Type == 1 ):
+            self.encrypt(file, key)
+        elif( Type == 2 ):
+            self.decrypt(file, key)
+
 
 if __name__ == "__main__":
     Cipher()
