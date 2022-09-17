@@ -4,6 +4,7 @@ from os import remove, system, urandom
 from json import load as json_load
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from time import sleep
 
 class colors:
     RESET = '\033[0m'
@@ -29,22 +30,21 @@ class Cipher:
             select = int(input(f"Select:{colors.YELLOW} "))
             print(colors.RESET)
 
-            match select:
-                case 1:
-                    key = self.load_key()
-                    file = input(f"Enter file name:{colors.YELLOW} ")
-                    self.encrypt(file, key)
-                case 2:
-                    key = self.load_key()
-                    file = input(f"Enter file name:{colors.YELLOW} ")
-                    self.decrypt(file, key)
-                case 3:
-                    password = input(f"Enter password:{colors.YELLOW} ")
-                    self.write_key(password)
-                case 4:
-                    exit()
-                case _:
-                    print(f"{colors.ERROR}[!]{colors.RESET} Wrong choice.")
+            if select == 1:
+                key = self.load_key()
+                file = input(f"Enter file name:{colors.YELLOW} ")
+                self.encrypt(file, key)
+            elif select == 2:
+                key = self.load_key()
+                file = input(f"Enter file name:{colors.YELLOW} ")
+                self.decrypt(file, key)
+            elif select == 3:
+                password = input(f"Enter password:{colors.YELLOW} ")
+                self.write_key(password)
+            elif select == 4:
+                print(f"{colors.YELLOW}Exiting...{colors.RESET}")
+                sleep(2)
+                exit()
 
     def write_key(self, password:str):
         salt = urandom(16)
