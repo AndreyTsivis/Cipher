@@ -1,6 +1,8 @@
 from base64 import urlsafe_b64encode as b64encode
+from itertools import count
 from cryptography.fernet import Fernet
-from os import remove, system, urandom
+from os import remove, system, urandom, chdir, getcwd, listdir
+from os.path import abspath, isdir
 from json import load as json_load
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -20,25 +22,53 @@ class colors:
 
 class Cipher:
     def __init__(self):
+        system("cls||clear")
+        self.prev_dir = getcwd()
+        chdir( abspath(f"{__file__}/..") )
         conf = json_load(open("config.json", "rb"))
+        print(f"{colors.GREEN + conf['AppArt'] + colors.CUR_CLR}\nver {conf['AppVersion'] + colors.RESET}\n")
 
         while True:
-            system("cls||clear")
-            print(f"{colors.GREEN + conf['AppArt'] + colors.CUR_CLR}\nver {conf['AppVersion'] + colors.RESET}\n")
+            print(f"{colors.YELLOW + getcwd() + colors.RESET}")
+            send_cmd = input(f"{colors.CUR_CLR}>> {colors.RESET}").split(" ")
 
-            print(f"{colors.YELLOW}[1]{colors.RESET} Encrypt\n{colors.YELLOW}[2]{colors.RESET} Decrypt\n{colors.YELLOW}[3]{colors.RESET} Generate new key\n{colors.YELLOW}[4]{colors.RESET} Exit")
-            select = int(input(f"Select:{colors.YELLOW} "))
-            print(colors.RESET)
-
-            if select == 1 or select == 2:
-                self.select( select )
-            elif select == 3:
-                password = input(f"Enter password:{colors.YELLOW} ")
-                self.write_key(password)
-            elif select == 4:
+            if "exit" in send_cmd:
                 print(f"{colors.YELLOW}Exiting...{colors.RESET}")
                 sleep(2)
-                exit()
+                chdir(abspath(self.prev_dir))
+                break
+
+            print(self.cmd_parse(send_cmd))
+
+    
+    def cmd_parse(self, cmd:list):
+        if "encrypt" in cmd:
+            key = self.load_key()
+            return self.encrypt(cmd[1], key)
+        elif "decrypt" in cmd:
+            key = self.load_key()
+            return self.decrypt(cmd[1], key)
+        elif "cd" in cmd:
+            chdir(abspath(cmd[1]))
+            return ""
+        elif "ls" in cmd:
+            wet_list = listdir()
+            dirlist = ""
+
+            for path in wet_list:
+                if( isdir(path) == 1 ):
+                    dirlist = f"{ dirlist + colors.BLUE + path + colors.RESET }\n"
+                elif( isdir(path) == 0 and ".encrypted" in path ):
+                    dirlist = f"{ dirlist + colors.YELLOW + path + colors.RESET }\n"
+                elif( isdir(path) == 0 and ".encrypted" not in path ):
+                    dirlist = f"{ dirlist + path }\n"
+                
+            return f"{dirlist}"
+        elif "keygen" in cmd:
+            password = input(f"Key file password:{colors.YELLOW} ")
+            return self.write_key(password)
+        else:
+            return f"{colors.ERROR}[!]{colors.RESET} Command not found.\n"
 
     def write_key(self, password:str):
         salt = urandom(16)
@@ -50,38 +80,73 @@ class Cipher:
         )
         pass_bytes = password.encode("utf-8")
         key = b64encode(kdf.derive(pass_bytes))
-        open("crypto.key", "wb").write(key)
+        open(abspath(f"{__file__}/../crypto.key"), "wb").write(key)
+        return f"{colors.RESET}Key file generated."
 
     def load_key(self):
-        return open("crypto.key", "rb").read()
+        return open(abspath(f"{__file__}/../crypto.key"), "rb").read()
 
     def encrypt(self, filename:str, key:bytes):
-        f = Fernet(key)
-        file_data = open(filename, "rb").read()
-        encrypted_data = f.encrypt(file_data)
-        open(f"{filename}.encrypted", "wb").write(encrypted_data)
-        remove(filename)
+        fernet = Fernet(key)
+        if "*" in filename:
+            wet_file_list = listdir()
+            file_list = list()
 
-    def decrypt(self, filename:str, key:bytes):
-        f = Fernet(key)
-        if ".encrypted" not in filename:
-            encrypted_data = open(f"{filename}.encrypted", "rb").read()
-            data = f.decrypt(encrypted_data)
-            open(filename, "wb").write(data)
-            remove(f"{filename}.encrypted")
-        elif ".encrypted" in filename:
-            encrypted_data = open(filename, "rb").read()
-            data = f.decrypt(encrypted_data)
-            open(filename[:-10], "wb").write(data)
+            for file in wet_file_list:
+                if isdir(file) == 0:
+                    file_list.append(file)
+
+            for file in file_list:
+                with open(file, "rb") as f:
+                    file_data = f.read()
+                    encrypted_data = fernet.encrypt(file_data)
+                open(f"{file}.encrypted", "wb").write(encrypted_data)
+                remove(file)
+
+            return f"{colors.SUCCESS}[+]{colors.RESET} {colors.YELLOW + str(len(file_list)) + colors.RESET} files were successfully encrypted.\n"
+        else:
+            with open(filename, "rb") as f:
+                    file_data = f.read()
+                    encrypted_data = fernet.encrypt(file_data)
+            open(f"{filename}.encrypted", "wb").write(encrypted_data)
             remove(filename)
 
-    def select(self, Type):
-        key = self.load_key()
-        file = input(f"Enter file name:{colors.YELLOW} ")
-        if( Type == 1 ):
-            self.encrypt(file, key)
-        elif( Type == 2 ):
-            self.decrypt(file, key)
+            return f"{colors.SUCCESS}[+]{colors.RESET} File '{colors.YELLOW + filename + colors.RESET}' encrypted successfully.\n"
+
+    def decrypt(self, filename:str, key:bytes):
+        fernet = Fernet(key)
+        if "*" in filename:
+            wet_file_list = listdir()
+            file_list = list()
+
+            for file in wet_file_list:
+                if isdir(file) == 0 and ".encrypted" in file:
+                    file_list.append(file)
+
+            for file in file_list:
+                with open(file, "rb") as f:
+                    encrypted_data = f.read()
+                    data = fernet.decrypt(encrypted_data)
+                open(file[:-10], "wb").write(data)
+                remove(file)
+
+            return f"{colors.SUCCESS}[+]{colors.RESET} {colors.YELLOW + str(len(file_list)) + colors.RESET} files were successfully decrypted.\n"
+        else:
+            if ".encrypted" not in filename:
+                encrypted_data = open(f"{filename}.encrypted", "rb").read()
+                data = fernet.decrypt(encrypted_data)
+                open(filename, "wb").write(data)
+                remove(f"{filename}.encrypted")
+
+                return f"{colors.SUCCESS}[+]{colors.RESET} File '{colors.YELLOW + f'{filename}.encrypted' + colors.RESET}' decrypted successfully.\n"
+            elif ".encrypted" in filename:
+                encrypted_data = open(filename, "rb").read()
+                data = fernet.decrypt(encrypted_data)
+                open(filename[:-10], "wb").write(data)
+                remove(filename)
+
+                return f"{colors.SUCCESS}[+]{colors.RESET} File '{colors.YELLOW + filename + colors.RESET}' decrypted successfully.\n"
+
 
 
 if __name__ == "__main__":
